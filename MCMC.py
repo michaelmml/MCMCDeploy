@@ -84,8 +84,6 @@ def transition_model(param):
 def metropolis_hastings(likelihood_func, transition_model, param_init, iterations):
     param_current = param_init
     param_posterior = []
-    samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
-    data = generate_data(samples)
     for i in range(iterations):
         param_new = transition_model(param_current)
         ratio = likelihood_func(param_new) / likelihood_func(param_current)
@@ -95,21 +93,18 @@ def metropolis_hastings(likelihood_func, transition_model, param_init, iteration
         param_posterior.append(param_current)
     return param_posterior
 
-# Streamlit sidebar
-def mcmcdemo():
-    iterations = st.sidebar.slider('Number of iterations', 1000, 10000, 5000)
-    burn_in = st.sidebar.slider('Burn-in period', 0, iterations//2, 1000)
-    
-    # Main Streamlit code
+# Main Metropolis-Hastings demonstration function
+def run_metropolis_hastings_demo(samples, iterations, burn_in):
+    data = generate_data(samples)
     output = metropolis_hastings(likelihood, transition_model, [0,1], iterations)
     estimated_mean = np.mean([param[0] for param in output[burn_in:]])
     estimated_std_dev = np.mean([param[1] for param in output[burn_in:]])
-    
+
     # Output to Streamlit
     st.title('Metropolis-Hastings Algorithm')
     st.write(f"Estimated Mean: {estimated_mean}")
     st.write(f"Estimated Standard Deviation: {estimated_std_dev}")
-    
+
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot([param[0] for param in output], label='Mean')
@@ -125,4 +120,11 @@ page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Metropolis-Hastings Demo'
 if page == 'Stock Price Plot':
     stockplots()
 elif page == 'Metropolis-Hastings Demo':
-    mcmcdemo()
+
+    st.sidebar.title('Metropolis-Hastings Demo')
+    samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
+    iterations = st.sidebar.slider('Number of iterations', 1000, 10000, 5000)
+    burn_in = st.sidebar.slider('Burn-in period', 0, iterations//2, 1000)
+
+    # Call the main function
+    run_metropolis_hastings_demo(samples, iterations, burn_in)
