@@ -24,7 +24,7 @@ def stockplots():
     ]
     
     # Use the multiselect widget to select stocks
-    selected_stocks = st.multiselect("Select stocks to plot:", top_100_tickers, default=stocks[:4])
+    selected_stocks = st.multiselect("Select stocks to plot:", top_100_tickers, default=top_100_tickers[:4])
     
     df2 = yf.download(selected_stocks, start="2022-03-31", end="2023-03-31")
     df2_close = df2['Adj Close']
