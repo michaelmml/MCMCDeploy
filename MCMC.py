@@ -84,6 +84,7 @@ def transition_model(param):
 def metropolis_hastings(likelihood_func, transition_model, param_init, iterations):
     param_current = param_init
     param_posterior = []
+    samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
     data = generate_data(samples)
     for i in range(iterations):
         param_new = transition_model(param_current)
@@ -96,7 +97,6 @@ def metropolis_hastings(likelihood_func, transition_model, param_init, iteration
 
 # Streamlit sidebar
 def mcmcdemo():
-    samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
     iterations = st.sidebar.slider('Number of iterations', 1000, 10000, 5000)
     burn_in = st.sidebar.slider('Burn-in period', 0, iterations//2, 1000)
     
