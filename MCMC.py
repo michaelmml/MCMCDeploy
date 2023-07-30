@@ -84,6 +84,7 @@ def transition_model(param):
 def metropolis_hastings(likelihood_func, transition_model, param_init, iterations):
     param_current = param_init
     param_posterior = []
+    data = generate_data(samples)
     for i in range(iterations):
         param_new = transition_model(param_current)
         ratio = likelihood_func(param_new) / likelihood_func(param_current)
@@ -100,7 +101,6 @@ def mcmcdemo():
     burn_in = st.sidebar.slider('Burn-in period', 0, iterations//2, 1000)
     
     # Main Streamlit code
-    data = generate_data(samples)
     output = metropolis_hastings(likelihood, transition_model, [0,1], iterations)
     estimated_mean = np.mean([param[0] for param in output[burn_in:]])
     estimated_std_dev = np.mean([param[1] for param in output[burn_in:]])
