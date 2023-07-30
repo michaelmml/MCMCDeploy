@@ -70,7 +70,7 @@ def generate_data(samples):
     return np.random.normal(10, 2, samples)
 
 # Likelihood and transition model
-def likelihood(param):
+def likelihood(param, data):
     mu, sigma = param
     if sigma < 0:
         return 0
@@ -81,12 +81,12 @@ def transition_model(param):
     return [np.random.normal(param[0], 0.5), abs(np.random.normal(param[1], 0.5))]
 
 # Metropolis-Hastings algorithm
-def metropolis_hastings(likelihood_func, transition_model, param_init, iterations):
+def metropolis_hastings(likelihood_func, transition_model, param_init, iterations, data):
     param_current = param_init
     param_posterior = []
     for i in range(iterations):
         param_new = transition_model(param_current)
-        ratio = likelihood_func(param_new) / likelihood_func(param_current)
+        ratio = likelihood_func(param_new, data) / likelihood_func(param_current, data)
         acceptance = min(1, ratio)
         if np.random.uniform(0,1) < acceptance:
             param_current = param_new
@@ -96,7 +96,7 @@ def metropolis_hastings(likelihood_func, transition_model, param_init, iteration
 # Main Metropolis-Hastings demonstration function
 def run_metropolis_hastings_demo(samples, iterations, burn_in):
     data = generate_data(samples)
-    output = metropolis_hastings(likelihood, transition_model, [0,1], iterations)
+    output = metropolis_hastings(likelihood, transition_model, [0,1], iterations, data)
     estimated_mean = np.mean([param[0] for param in output[burn_in:]])
     estimated_std_dev = np.mean([param[1] for param in output[burn_in:]])
 
@@ -120,7 +120,6 @@ page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Metropolis-Hastings Demo'
 if page == 'Stock Price Plot':
     stockplots()
 elif page == 'Metropolis-Hastings Demo':
-
     st.sidebar.title('Metropolis-Hastings Demo')
     samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
     iterations = st.sidebar.slider('Number of iterations', 1000, 10000, 5000)
