@@ -90,6 +90,59 @@ def stockplots():
     fig2.suptitle("Relative % Returns for each Investment over Time Period", y=1)
     st.pyplot(fig2)
 
+###############
+
+def portfolio_simulator():
+    # Predefined list of stocks
+    stock_list = [
+        'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'FB', 'TSLA', 'BRK-A', 'BABA', 'V', 'JPM', 
+        'JNJ', 'WMT', 'MA', 'PG', 'UNH', 'DIS', 'NVDA', 'HD', 'PYPL', 'BAC', 'VZ', 
+        'ADBE', 'CMCSA', 'KO', 'NKE', 'MRK', 'PEP', 'PFE', 'T', 'INTC', 'CRM', 'ABT', 
+        'ORCL', 'ABBV', 'CSCO', 'TMO', 'AVGO', 'XOM', 'ACN', 'QCOM', 'TXN', 'MCD', 
+        'BHP.AX', 'RIO.L', 'TM', 'BA', 'LMT', 'HON', 'UNP', 'SBUX', 'IBM', 'MMM', 
+        'GE', 'AMD', 'BLK', 'CAT', 'CVX', 'RTX', 'GS', 'MS', 'C', 'UPS', 'ISRG', 
+        'INTU', 'VRTX', 'ITW', 'BDX', 'TGT', 'ANTM', 'TJX', 'SYK', 'NEE', 'AMT', 
+        'ADP', 'ILMN', 'CME', 'KMB', 'SPGI', 'USB', 'MDT', 'PNC', 'DUK', 'MU', 
+        'MO', 'CSX', 'BKNG', 'ZTS', 'CL', 'PLD', 'GILD', 'CB', 'AXP', 'CCI', 'LIN', 
+        'COST', 'SO', 'LOW', 'TFC', 'DHR', 'BK', 'DD', 'BIIB', 'CI', 'BSX', 'TRV', 
+        'BAX', 'EOG', 'ATVI', 'GD', 'COF'
+    ]
+
+    # Select up to 10 stocks
+    selected_stocks = st.multiselect("Select up to 10 stocks for your portfolio:", stock_list, default=['AAPL', 'MSFT'])
+
+    # Get quantity for each selected stock
+    quantities = {}
+    for stock in selected_stocks:
+        quantities[stock] = st.number_input(f"Quantity of {stock}:", min_value=1, value=1)
+
+    # Select start and end date
+    start_date = st.date_input("Purchase date", pd.to_datetime('2022-01-01'))
+    end_date = st.date_input("End date", pd.to_datetime('2023-01-01'))
+
+    if start_date > end_date:
+        st.error('Error: End date must fall after purchase date.')
+
+    # Download the data for selected stocks over the chosen period
+    data = yf.download(selected_stocks, start=start_date, end=end_date)['Adj Close']
+
+    # Calculate the portfolio value over time
+    portfolio_value = pd.Series(index=data.index)
+    for stock in selected_stocks:
+        portfolio_value += quantities[stock] * data[stock]
+
+    # Plot the portfolio value
+    st.subheader('Portfolio Value Over Time')
+    portfolio_value.plot(figsize=(12,8))
+    st.pyplot(plt.gcf())
+
+    # Calculate and display portfolio return
+    portfolio_cost = portfolio_value.iloc[0]
+    portfolio_end_value = portfolio_value.iloc[-1]
+    portfolio_return = ((portfolio_end_value - portfolio_cost) / portfolio_cost) * 100  # In percentage
+    st.write(f"Portfolio return from {start_date} to {end_date} is {portfolio_return:.2f}%.")
+
+
 #########
 
 # Function to generate sample data
@@ -141,12 +194,14 @@ def run_metropolis_hastings_demo(samples, iterations, burn_in):
     plt.legend()
     st.pyplot(plt)
 
-# Navigation
+######################### Navigation
 st.sidebar.title('NATLANTICS')
-page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Metropolis-Hastings Demo'])
+page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Metropolis-Hastings Demo'])
 
 if page == 'Stock Price Plot':
     stockplots()
+elif page == 'Portfolio Simulator':
+    portfolio_simulator()
 elif page == 'Metropolis-Hastings Demo':
     st.sidebar.title('Metropolis-Hastings Demo')
     samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
