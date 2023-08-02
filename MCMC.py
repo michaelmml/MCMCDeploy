@@ -111,10 +111,14 @@ def portfolio_simulator():
     # Select up to 10 stocks
     selected_stocks = st.multiselect("Select up to 10 stocks for your portfolio:", stock_list, default=['AAPL', 'MSFT'])
 
-    # Get quantity for each selected stock
-    quantities = {}
+    # Get the percentage allocation for each selected stock
+    allocations = {}
     for stock in selected_stocks:
-        quantities[stock] = st.number_input(f"Quantity of {stock}:", min_value=1, value=1)
+        allocations[stock] = st.number_input(f"Allocation for {stock} (in %):", min_value=1, max_value=100, value=10)
+
+    # Check if the sum of the allocations is equal to 100
+    if sum(allocations.values()) != 100:
+        st.error('Error: The sum of the allocations must be equal to 100%.')
 
     # Select start and end date
     start_date = st.date_input("Purchase date", pd.to_datetime('2022-01-01'))
@@ -129,7 +133,10 @@ def portfolio_simulator():
     # Calculate the portfolio value over time
     portfolio_value = pd.Series(index=data.index, data=np.zeros(len(data.index)))
     for stock in selected_stocks:
-        portfolio_value += quantities[stock] * data[stock]
+        # Calculate the quantity for each stock
+        quantities = (allocations[stock] / 100) * 100 / data[stock].iloc[0]  # Here 100 is the total portfolio size
+        # Calculate the portfolio value
+        portfolio_value += quantities * data[stock]
 
     # Plot the portfolio value
     st.subheader('Portfolio Value Over Time')
