@@ -35,9 +35,9 @@ def stockplots():
     
     df2 = yf.download(selected_stocks, start=start_date, end=end_date)
     df2_close = df2['Adj Close']
-    
+
     fig, axs = plt.subplots(5, 4)
-    fig.set_size_inches(16,24)
+    fig.set_size_inches(16,22)
     old_df = pd.DataFrame()
     x = 0
     
@@ -66,7 +66,7 @@ def stockplots():
         x += 1
         old_df = analysis['Returns']
     
-    fig.suptitle("Portfolio Summary")
+    # fig.suptitle("Portfolio Summary")
     st.pyplot(fig)
 
     returns = (df2['Adj Close']/ df2['Adj Close'].shift(1))
