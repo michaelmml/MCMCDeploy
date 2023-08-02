@@ -127,7 +127,7 @@ def portfolio_simulator():
     data = yf.download(selected_stocks, start=start_date, end=end_date)['Adj Close']
 
     # Calculate the portfolio value over time
-    portfolio_value = pd.Series(index=data.index)
+    portfolio_value = pd.Series(index=data.index, data=np.zeros(len(data.index)))
     for stock in selected_stocks:
         portfolio_value += quantities[stock] * data[stock]
 
