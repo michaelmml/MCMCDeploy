@@ -25,8 +25,9 @@ def stockplots():
     
     # Use the multiselect widget to select stocks
     selected_stocks = st.multiselect("Select stocks to plot:", top_100_tickers, default=top_100_tickers[:4])
+    start_date, end_date = st.date_input("Select date range:", [pd.to_datetime('2022-01-01'), pd.to_datetime('2023-01-01')])
     
-    df2 = yf.download(selected_stocks, start="2022-03-31", end="2023-03-31")
+    df2 = yf.download(selected_stocks, start=start_date, end=end_date)
     df2_close = df2['Adj Close']
     
     fig, axs = plt.subplots(5, 4)
