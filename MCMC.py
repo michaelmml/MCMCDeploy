@@ -25,7 +25,13 @@ def stockplots():
     
     # Use the multiselect widget to select stocks
     selected_stocks = st.multiselect("Select stocks to plot:", top_100_tickers, default=top_100_tickers[:4])
-    start_date, end_date = st.date_input("Select date range:", [pd.to_datetime('2022-01-01'), pd.to_datetime('2023-01-01')])
+    
+    # Select start and end date
+    start_date = st.date_input("Start date", pd.to_datetime('2022-01-01'))
+    end_date = st.date_input("End date", pd.to_datetime('2023-01-01'))
+
+    if start_date > end_date:
+        st.error('Error: End date must fall after start date.')
     
     df2 = yf.download(selected_stocks, start=start_date, end=end_date)
     df2_close = df2['Adj Close']
