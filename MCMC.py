@@ -69,6 +69,27 @@ def stockplots():
     fig.suptitle("Portfolio Summary")
     st.pyplot(fig)
 
+    returns = (df2['Adj Close']/ df2['Adj Close'].shift(1))
+    returns = returns.fillna(1)
+    fig2, axs2 = plt.subplots(1, 5, sharey=True, gridspec_kw={'wspace': 0})
+    fig2.set_facecolor("white")
+    fig2.set_size_inches(24, 8)
+    idx = 0
+    start = 0
+    
+    for idx in range(5):
+    
+        analysis_cut = returns.iloc[start:]
+        analysis_cut = analysis_cut.reset_index(drop=True)
+        analysis_cut = analysis_cut.cumprod()
+        analysis_cut.plot(ylim=(0.5, 2.5), ax=axs2[idx])
+        idx += 1
+        start += 50
+    
+    axs2[0].set_ylabel("Return Rebased to 1 at Beginning of Period")
+    fig2.suptitle("Relative % Returns for each Investment over Time Period", y=1)
+    st.pyplot(fig2)
+
 #########
 
 # Function to generate sample data
