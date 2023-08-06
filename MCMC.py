@@ -145,7 +145,7 @@ def portfolio_simulator():
     portfolio_return = ((portfolio_end_value - portfolio_cost) / portfolio_cost) * 100  # In percentage
     st.write(f"Portfolio return from {start_date} to {end_date} is {portfolio_return:.2f}%.")
 
-    returns = np.log(data['Adj Close']/ data['Adj Close'].shift(1))
+    returns = np.log(data/ data.shift(1))
     returns.dropna(inplace=True)
     p_ret = []
     p_vol = []
