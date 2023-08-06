@@ -95,10 +95,11 @@ def stockplots():
 def portfolio_simulator():
 
     # Select up to 10 stocks
-    selected_stocks = st.multiselect("Select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
+    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
 
     for stock in selected_stocks:
-        if yf.Ticker(stock).info.get('symbol') != stock:
+        ticker_info = yf.Ticker(stock).info
+        if not ticker_info or 'symbol' not in ticker_info:
             st.error(f"Error: {stock} is not a valid stock symbol.")
             return  # Stop execution
     
