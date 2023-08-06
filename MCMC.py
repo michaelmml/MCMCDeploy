@@ -95,7 +95,7 @@ def stockplots():
 def portfolio_simulator():
 
     # Select up to 10 stocks
-    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
+    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=[], default=['AAPL', 'MSFT'])
 
     for stock in selected_stocks:
         ticker_info = yf.Ticker(stock).info
