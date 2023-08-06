@@ -140,7 +140,7 @@ def portfolio_simulator():
     portfolio_return = ((portfolio_end_value - portfolio_cost) / portfolio_cost) * 100  # In percentage
     st.write(f"Portfolio return from {start_date} to {end_date} is {portfolio_return:.2f}%.")
 
-    returns = np.log(df2['Adj Close']/ df2['Adj Close'].shift(1))
+    returns = np.log(data['Adj Close']/ data['Adj Close'].shift(1))
     returns.dropna(inplace=True)
     p_ret = []
     p_vol = []
@@ -160,11 +160,11 @@ def portfolio_simulator():
         volatility = stan_dev*np.sqrt(250)
         p_vol.append(volatility)
     
-    data = {'Returns':p_ret, 'Volatility':p_vol}
-    for counter, symbol in enumerate(df2_close.columns.tolist()):
-        data[symbol+' weight'] = [w[counter] for w in p_weights]
+    data2 = {'Returns':p_ret, 'Volatility':p_vol}
+    for counter, symbol in enumerate(data.columns.tolist()):
+        data2[symbol+' weight'] = [w[counter] for w in p_weights]
 
-    portfolios = pd.DataFrame(data)
+    portfolios = pd.DataFrame(data2)
     risk_free_rate = 0.1
     optimal_risky_port = portfolios.iloc[((portfolios['Returns']-risk_free_rate)/portfolios['Volatility']).idxmax()]
     plt.subplots(figsize=(10, 10))
