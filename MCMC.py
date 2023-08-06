@@ -93,24 +93,15 @@ def stockplots():
 ###############
 
 def portfolio_simulator():
-    # Predefined list of stocks
-    stock_list = [
-        'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'FB', 'TSLA', 'BRK-A', 'BABA', 'V', 'JPM', 
-        'JNJ', 'WMT', 'MA', 'PG', 'UNH', 'DIS', 'NVDA', 'HD', 'PYPL', 'BAC', 'VZ', 
-        'ADBE', 'CMCSA', 'KO', 'NKE', 'MRK', 'PEP', 'PFE', 'T', 'INTC', 'CRM', 'ABT', 
-        'ORCL', 'ABBV', 'CSCO', 'TMO', 'AVGO', 'XOM', 'ACN', 'QCOM', 'TXN', 'MCD', 
-        'BHP.AX', 'RIO.L', 'TM', 'BA', 'LMT', 'HON', 'UNP', 'SBUX', 'IBM', 'MMM', 
-        'GE', 'AMD', 'BLK', 'CAT', 'CVX', 'RTX', 'GS', 'MS', 'C', 'UPS', 'ISRG', 
-        'INTU', 'VRTX', 'ITW', 'BDX', 'TGT', 'ANTM', 'TJX', 'SYK', 'NEE', 'AMT', 
-        'ADP', 'ILMN', 'CME', 'KMB', 'SPGI', 'USB', 'MDT', 'PNC', 'DUK', 'MU', 
-        'MO', 'CSX', 'BKNG', 'ZTS', 'CL', 'PLD', 'GILD', 'CB', 'AXP', 'CCI', 'LIN', 
-        'COST', 'SO', 'LOW', 'TFC', 'DHR', 'BK', 'DD', 'BIIB', 'CI', 'BSX', 'TRV', 
-        'BAX', 'EOG', 'ATVI', 'GD', 'COF'
-    ]
 
     # Select up to 10 stocks
-    selected_stocks = st.multiselect("Select up to 10 stocks for your portfolio:", stock_list, default=['AAPL', 'MSFT'])
+    selected_stocks = st.multiselect("Select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
 
+    for stock in selected_stocks:
+        if yf.Ticker(stock).info.get('symbol') != stock:
+            st.error(f"Error: {stock} is not a valid stock symbol.")
+            return  # Stop execution
+    
     # Get the percentage allocation for each selected stock
     allocations = {}
     for stock in selected_stocks:
@@ -149,6 +140,37 @@ def portfolio_simulator():
     portfolio_return = ((portfolio_end_value - portfolio_cost) / portfolio_cost) * 100  # In percentage
     st.write(f"Portfolio return from {start_date} to {end_date} is {portfolio_return:.2f}%.")
 
+    returns = np.log(df2['Adj Close']/ df2['Adj Close'].shift(1))
+    returns.dropna(inplace=True)
+    p_ret = []
+    p_vol = []
+    p_weights = []
+    num_assets = len(returns.columns)
+    num_iterations = 10000
+    
+    for portfolio in range(num_iterations):
+        weights = np.random.random(num_assets)
+        weights = weights/np.sum(weights)
+        p_weights.append(weights)
+        ret = np.dot(weights, returns_overall)
+    
+        p_ret.append(ret)
+        var = cov_matrix.mul(weights, axis=0).mul(weights, axis=1).sum().sum()
+        stan_dev = np.sqrt(var)
+        volatility = stan_dev*np.sqrt(250)
+        p_vol.append(volatility)
+    
+    data = {'Returns':p_ret, 'Volatility':p_vol}
+    for counter, symbol in enumerate(df2_close.columns.tolist()):
+        data[symbol+' weight'] = [w[counter] for w in p_weights]
+
+    portfolios = pd.DataFrame(data)
+    risk_free_rate = 0.1
+    optimal_risky_port = portfolios.iloc[((portfolios['Returns']-risk_free_rate)/portfolios['Volatility']).idxmax()]
+    plt.subplots(figsize=(10, 10))
+    plt.scatter(portfolios['Volatility'], portfolios['Returns'],marker='o', s=10, alpha=0.3)
+    plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
+    st.pyplot(plt)
 
 #########
 
