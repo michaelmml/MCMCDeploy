@@ -171,6 +171,7 @@ def portfolio_simulator():
     plt.scatter(portfolios['Volatility'], portfolios['Returns'],marker='o', s=10, alpha=0.3)
     plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
     st.pyplot(plt)
+    st.write(f"Optimised weighting: {optimal_risky_port}")
 
 #########
 
