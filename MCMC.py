@@ -148,6 +148,9 @@ def portfolio_simulator():
 
     returns = np.log(data/ data.shift(1))
     returns.dropna(inplace=True)
+    cov_matrix = returns.cov()
+    corr_matrix = returns.corr()
+    returns_overall = returns.mean()
     p_ret = []
     p_vol = []
     p_weights = []
