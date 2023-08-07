@@ -99,7 +99,7 @@ def portfolio_simulator():
     # Allow users to manually input stock symbols (up to 10) from the predefined list
     # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
 
-    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
+    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", input=[], default=['AAPL', 'MSFT'])
 
     # Check if the stock symbols are valid by trying to download the data
     for stock in selected_stocks:
