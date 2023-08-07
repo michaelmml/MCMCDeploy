@@ -191,7 +191,7 @@ def portfolio_simulator():
     st.pyplot(plt)
     st.write("Optimal Risky Portfolio Weighting")
     st.table(optimal_risky_port)
-    st.write("Optimal Risky Portfolio Weighting")
+    st.write("Minimum Volatility Portfolio Weighting")
     st.table(min_vol_port)
 
 #########
