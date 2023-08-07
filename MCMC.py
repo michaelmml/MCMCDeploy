@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_tags import st_tags
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
@@ -94,11 +93,6 @@ def stockplots():
 ###############
 
 def portfolio_simulator():
-
-    # List of predefined stock symbols
-    
-    # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
-    # selected_stocks = st_tags("Type or select up to 10 stocks for your portfolio:", "Press enter to add more", ['AAPL', 'MSFT', 'META'])
 
     # Allow users to manually input stock symbols as a comma-separated string
     stock_input = st.text_input("Type up to 10 stock symbols for your portfolio (separated by commas):", value='AAPL, MSFT')
@@ -195,9 +189,9 @@ def portfolio_simulator():
     plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
     plt.scatter(min_vol_port[1], min_vol_port[0], color='r', marker='*', s=500)
     st.pyplot(plt)
-    st.header("Optimal Risky Portfolio Weighting")
+    st.write("Optimal Risky Portfolio Weighting")
     st.table(optimal_risky_port)
-    st.header("Optimal Risky Portfolio Weighting")
+    st.write("Optimal Risky Portfolio Weighting")
     st.table(min_vol_port)
 
 #########
