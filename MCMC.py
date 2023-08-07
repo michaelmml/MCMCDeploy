@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_tags import st_tags
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
@@ -98,8 +99,9 @@ def portfolio_simulator():
     # stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
     # Allow users to manually input stock symbols (up to 10) from the predefined list
     # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
+    # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", input=[], default=['AAPL', 'MSFT'])
 
-    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", input=[], default=['AAPL', 'MSFT'])
+    selected_stocks = st_tags("Type or select up to 10 stocks for your portfolio:", ‘Press enter to add more’, [‘AAPL’, ‘MSFT’, ‘META’])
 
     # Check if the stock symbols are valid by trying to download the data
     for stock in selected_stocks:
