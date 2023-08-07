@@ -96,13 +96,25 @@ def stockplots():
 def portfolio_simulator():
 
     # List of predefined stock symbols
-    # stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
-    # Allow users to manually input stock symbols (up to 10) from the predefined list
+    
     # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
-    # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", input=[], default=['AAPL', 'MSFT'])
+    # selected_stocks = st_tags("Type or select up to 10 stocks for your portfolio:", "Press enter to add more", ['AAPL', 'MSFT', 'META'])
 
-    selected_stocks = st_tags("Type or select up to 10 stocks for your portfolio:", "Press enter to add more", ['AAPL', 'MSFT', 'META'])
+    # Allow users to manually input stock symbols as a comma-separated string
+    stock_input = st.text_input("Type up to 10 stock symbols for your portfolio (separated by commas):", value='AAPL, MSFT')
+    selected_stocks = [stock.strip() for stock in stock_input.split(',')]
 
+    # Check if there are more than 10 stocks
+    if len(selected_stocks) > 10:
+        st.error('Error: You can select up to 10 stocks only.')
+        return  # Stop execution
+
+    # Check if the stock symbols are valid by trying to download the data
+    for stock in selected_stocks:
+        if yf.Ticker(stock).info.get('symbol') != stock:
+            st.error(f"Error: {stock} is not a valid stock symbol.")
+            return  # Stop execution
+    
     # Check if the stock symbols are valid by trying to download the data
     for stock in selected_stocks:
         if yf.Ticker(stock).info.get('symbol') != stock:
