@@ -95,15 +95,15 @@ def stockplots():
 def portfolio_simulator():
 
     # List of predefined stock symbols
-    stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
-    
+    # stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
     # Allow users to manually input stock symbols (up to 10) from the predefined list
-    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
+    # selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
 
-    # Check if the stock symbols are valid
+    selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", default=['AAPL', 'MSFT'])
+
+    # Check if the stock symbols are valid by trying to download the data
     for stock in selected_stocks:
-        ticker_info = yf.Ticker(stock).info
-        if not ticker_info or 'symbol' not in ticker_info:
+        if yf.Ticker(stock).info.get('symbol') != stock:
             st.error(f"Error: {stock} is not a valid stock symbol.")
             return  # Stop execution
     
@@ -173,13 +173,18 @@ def portfolio_simulator():
         data2[symbol+' weight'] = [w[counter] for w in p_weights]
 
     portfolios = pd.DataFrame(data2)
-    risk_free_rate = 0.1
+    risk_free_rate = 0.08
     optimal_risky_port = portfolios.iloc[((portfolios['Returns']-risk_free_rate)/portfolios['Volatility']).idxmax()]
+    min_vol_port = portfolios.iloc[portfolios['Volatility'].idxmin()]
     plt.subplots(figsize=(10, 10))
     plt.scatter(portfolios['Volatility'], portfolios['Returns'],marker='o', s=10, alpha=0.3)
     plt.scatter(optimal_risky_port[1], optimal_risky_port[0], color='g', marker='*', s=500)
+    plt.scatter(min_vol_port[1], min_vol_port[0], color='r', marker='*', s=500)
     st.pyplot(plt)
-    st.write(f"Optimised weighting: {optimal_risky_port}")
+    st.header("Optimal Risky Portfolio Weighting")
+    st.table(optimal_risky_port)
+    st.header("Optimal Risky Portfolio Weighting")
+    st.table(min_vol_port)
 
 #########
 
