@@ -11,7 +11,7 @@ import math
 def stockplots():
     # Define the set of stocks
     top_100_tickers = [
-        'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'FB', 'TSLA', 'BRK-A', 'BABA', 'V', 'JPM', 
+        'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'BRK-A', 'BABA', 'V', 'JPM', 
         'JNJ', 'WMT', 'MA', 'PG', 'UNH', 'DIS', 'NVDA', 'HD', 'PYPL', 'BAC', 'VZ', 
         'ADBE', 'CMCSA', 'KO', 'NKE', 'MRK', 'PEP', 'PFE', 'T', 'INTC', 'CRM', 'ABT', 
         'ORCL', 'ABBV', 'CSCO', 'TMO', 'AVGO', 'XOM', 'ACN', 'QCOM', 'TXN', 'MCD', 
@@ -96,7 +96,7 @@ def stockplots():
 def portfolio_simulator():
 
     # List of predefined stock symbols
-    stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'FB']
+    stock_symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
     
     # Allow users to manually input stock symbols (up to 10) from the predefined list
     selected_stocks = st.multiselect("Type or select up to 10 stocks for your portfolio:", options=stock_symbols)
