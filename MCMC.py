@@ -247,35 +247,43 @@ def run_metropolis_hastings_demo(samples, iterations, burn_in):
     st.pyplot(plt)
 
 #########
-
-
-
-def black_scholes_option_price(option_type, S0, K, T, r, sigma):
-    """
-    Computes European option price using Black-Scholes formula.
-    
-    option_type: 'call' or 'put'
-    S0: initial stock price
-    K: strike price
-    T: time to expiration (in years)
-    r: risk-free interest rate (annual)
-    sigma: volatility (annual)
-    """
-    # Calculate d1 and d2 parameters
-    d1 = (np.log(S0 / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+# Black Scholes for European
+def black_scholes(option_type, S, K, r, T, sigma):
+    # Black-Scholes formula
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
 
-    # Calculate call or put option price
     if option_type == 'call':
-        option_price = S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+        option_price = (S * norm.cdf(d1, 0.0, 1.0) - K * np.exp(-r * T) * norm.cdf(d2, 0.0, 1.0))
     elif option_type == 'put':
-        option_price = K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
+        option_price = (K * np.exp(-r * T) * norm.cdf(-d2, 0.0, 1.0) - S * norm.cdf(-d1, 0.0, 1.0))
     else:
         raise ValueError("Invalid option type. Use 'call' or 'put'.")
 
     return option_price
 
+def calculate_volatility(stock_symbol, start_date, end_date):
+    # Get stock historical data
+    stock_data = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close']
+    
+    # Calculate daily returns
+    daily_returns = stock_data.pct_change().dropna()
 
+    # Calculate volatility as the standard deviation of daily returns
+    volatility = daily_returns.std()
+
+    return volatility
+
+def european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, expiry_days):
+    S0 = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close'][-1]
+    T = expiry_days / 252  # Convert to years assuming 252 trading days per year
+    sigma = calculate_volatility(stock_symbol, start_date, end_date)
+
+    european_option_price_result = black_scholes(option_type, S0, strike_price, risk_free_rate, T, sigma)
+    
+    st.write(f"The estimated price for the European {option_type} option is: ${european_option_price_result:.2f}.")
+
+# Simulations for American
 def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
     # Get stock historical data
     stock_data = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close']
@@ -343,14 +351,7 @@ def brownian_motion_demo():
     strike_price = st.number_input("Strike price for the option:", value=100.0)
     risk_free_rate = st.number_input("Risk-free interest rate (annual, in %):", value=0.01) / 100
     option_type = st.selectbox("Option Type:", options=['call', 'put'])
-    volatility = st.number_input("Volatility (annual, in %):", value=simulated_prices.pct_change().std() * np.sqrt(252) * 100) / 100
-    
-    # Calculate option price
-    option_price = black_scholes_option_price(option_type, simulated_prices.iloc[-1], strike_price, time_to_expiration, risk_free_rate, volatility)
-    
-    # Display the option price
-    st.write(f"The estimated price for the {option_type} option is: ${option_price:.2f}.")
-    
+
     # Simulate Multiple Stock Price Paths
     n_simulations = st.slider("Number of simulations for American option:", min_value=100, max_value=10000, value=1000)
     simulated_paths = simulate_multiple_paths(stock_symbol, start_date, end_date, forecast_days, n_simulations)
@@ -365,6 +366,12 @@ def brownian_motion_demo():
 
     # Display the American option price
     st.write(f"The estimated price for the American {option_type} option is: ${american_option_price_result:.2f}.")
+
+    # Additional part for European Option
+    st.subheader('European Option Pricing using Black-Scholes')
+    expiry_days = st.number_input("Number of expiry days for European option:", min_value=1, max_value=365, value=30)
+    european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, expiry_days)
+
 
 #########
 
