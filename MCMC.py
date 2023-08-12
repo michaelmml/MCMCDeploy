@@ -245,14 +245,73 @@ def run_metropolis_hastings_demo(samples, iterations, burn_in):
     plt.legend()
     st.pyplot(plt)
 
+#########
+
+def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
+    # Get historical stock data
+    stock_data = yf.download(stock_symbol, start=start_date, end=end_date)['Adj Close']
+    
+    # Calculate daily returns
+    daily_returns = stock_data.pct_change().dropna()
+
+    # Calculate mean and standard deviation of daily returns
+    mu = daily_returns.mean()
+    sigma = daily_returns.std()
+
+    # Initial stock price
+    S0 = stock_data.iloc[-1]
+
+    # Time increment (1 day)
+    dt = 1
+
+    # Simulate Brownian Motion for forecast_days
+    prices = [S0]
+    for t in range(forecast_days):
+        # Generate a random number following standard normal distribution
+        Z = np.random.normal()
+
+        # Compute the next price using the geometric Brownian motion formula
+        St = prices[-1] * np.exp((mu - 0.5 * sigma ** 2) * dt + sigma * np.sqrt(dt) * Z)
+        prices.append(St)
+
+    return pd.Series(index=pd.date_range(start=stock_data.index[-1], periods=forecast_days + 1, freq='B'), data=prices)
+
+def brownian_motion_demo():
+    # Get user input for stock symbol
+    stock_symbol = st.text_input("Type the stock symbol for Brownian Motion simulation:", value='AAPL')
+
+    # Check if the stock symbol is valid
+    if yf.Ticker(stock_symbol).info.get('symbol') != stock_symbol:
+        st.error(f"Error: {stock_symbol} is not a valid stock symbol.")
+        return  # Stop execution
+
+    # Select start and end date for historical data
+    start_date = st.date_input("Historical data start date", pd.to_datetime('2022-01-01'))
+    end_date = st.date_input("Historical data end date", pd.to_datetime('2023-01-01'))
+
+    # Get forecast days
+    forecast_days = st.slider('Forecast days for Brownian Motion:', min_value=10, max_value=250, value=100)
+
+    # Simulate Brownian Motion
+    simulated_prices = simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days)
+
+    # Plot the simulated prices
+    st.subheader('Simulated Stock Prices Using Brownian Motion')
+    simulated_prices.plot(figsize=(12,8))
+    st.pyplot(plt.gcf())
+
+#########
+
 ######################### Navigation
 st.sidebar.title('NATLANTICS')
-page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Metropolis-Hastings Demo'])
+page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Brownian Motion', 'Metropolis-Hastings Demo'])
 
 if page == 'Stock Price Plot':
     stockplots()
 elif page == 'Portfolio Simulator':
     portfolio_simulator()
+elif page == 'Brownian Motion':
+    brownian_motion_demo()
 elif page == 'Metropolis-Hastings Demo':
     st.sidebar.title('Metropolis-Hastings Demo')
     samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
