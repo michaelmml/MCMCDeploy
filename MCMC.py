@@ -4,6 +4,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
+from scipy.stats import norm
 
 ###############
 
@@ -276,6 +277,31 @@ def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
 
     return pd.Series(index=pd.date_range(start=stock_data.index[-1], periods=forecast_days + 1, freq='B'), data=prices)
 
+def black_scholes_option_price(option_type, S0, K, T, r, sigma):
+    """
+    Computes European option price using Black-Scholes formula.
+    
+    option_type: 'call' or 'put'
+    S0: initial stock price
+    K: strike price
+    T: time to expiration (in years)
+    r: risk-free interest rate (annual)
+    sigma: volatility (annual)
+    """
+    # Calculate d1 and d2 parameters
+    d1 = (np.log(S0 / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    # Calculate call or put option price
+    if option_type == 'call':
+        option_price = S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    elif option_type == 'put':
+        option_price = K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
+    else:
+        raise ValueError("Invalid option type. Use 'call' or 'put'.")
+
+    return option_price
+
 def brownian_motion_demo():
     # Get user input for stock symbol
     stock_symbol = st.text_input("Type the stock symbol for Brownian Motion simulation:", value='AAPL')
@@ -299,6 +325,22 @@ def brownian_motion_demo():
     st.subheader('Simulated Stock Prices Using Brownian Motion')
     simulated_prices.plot(figsize=(12,8))
     st.pyplot(plt.gcf())
+
+    # European Option Pricing
+    st.subheader('European Option Pricing')
+    
+    # Input parameters for option pricing
+    option_type = st.selectbox("Option type:", options=['call', 'put'])
+    strike_price = st.number_input("Strike price:", value=simulated_prices.iloc[-1])
+    time_to_expiration = st.slider("Time to expiration (days):", min_value=1, max_value=365, value=30) / 365
+    risk_free_rate = st.number_input("Risk-free interest rate (annual, in %):", value=0.01) / 100
+    volatility = st.number_input("Volatility (annual, in %):", value=simulated_prices.pct_change().std() * np.sqrt(252) * 100) / 100
+    
+    # Calculate option price
+    option_price = black_scholes_option_price(option_type, simulated_prices.iloc[-1], strike_price, time_to_expiration, risk_free_rate, volatility)
+    
+    # Display the option price
+    st.write(f"The estimated price for the {option_type} option is: ${option_price:.2f}.")
 
 #########
 
