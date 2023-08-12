@@ -248,34 +248,7 @@ def run_metropolis_hastings_demo(samples, iterations, burn_in):
 
 #########
 
-def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
-    # Get historical stock data
-    stock_data = yf.download(stock_symbol, start=start_date, end=end_date)['Adj Close']
-    
-    # Calculate daily returns
-    daily_returns = stock_data.pct_change().dropna()
 
-    # Calculate mean and standard deviation of daily returns
-    mu = daily_returns.mean()
-    sigma = daily_returns.std()
-
-    # Initial stock price
-    S0 = stock_data.iloc[-1]
-
-    # Time increment (1 day)
-    dt = 1
-
-    # Simulate Brownian Motion for forecast_days
-    prices = [S0]
-    for t in range(forecast_days):
-        # Generate a random number following standard normal distribution
-        Z = np.random.normal()
-
-        # Compute the next price using the geometric Brownian motion formula
-        St = prices[-1] * np.exp((mu - 0.5 * sigma ** 2) * dt + sigma * np.sqrt(dt) * Z)
-        prices.append(St)
-
-    return pd.Series(index=pd.date_range(start=stock_data.index[-1], periods=forecast_days + 1, freq='B'), data=prices)
 
 def black_scholes_option_price(option_type, S0, K, T, r, sigma):
     """
@@ -302,38 +275,74 @@ def black_scholes_option_price(option_type, S0, K, T, r, sigma):
 
     return option_price
 
+
+def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
+    # Get stock historical data
+    stock_data = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close']
+
+    # Calculate daily returns
+    daily_returns = stock_data.pct_change().dropna()
+
+    # Calculate drift and volatility
+    mu = daily_returns.mean()
+    sigma = daily_returns.std()
+
+    # Initialize stock price
+    S0 = stock_data[-1]
+    stock_prices = [S0]
+
+    # Simulate stock price using geometric Brownian motion
+    for t in range(forecast_days):
+        dW = np.random.normal()
+        dS = mu * S0 * 1 + sigma * S0 * dW
+        S0 += dS
+        stock_prices.append(S0)
+
+    return stock_prices
+
+def simulate_multiple_paths(stock_symbol, start_date, end_date, forecast_days, n_simulations):
+    # Simulate n_simulations paths of stock prices
+    paths = [simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days) for _ in range(n_simulations)]
+    return pd.DataFrame(paths).transpose()
+
+def american_option_price(option_type, simulated_paths, K, r, dt):
+    # Determine the optimal early exercise points for each path
+    if option_type == 'call':
+        exercise_values = (simulated_paths - K).apply(lambda path: path[path > 0])
+    elif option_type == 'put':
+        exercise_values = (K - simulated_paths).apply(lambda path: path[path > 0])
+    else:
+        raise ValueError("Invalid option type. Use 'call' or 'put'.")
+
+    # Determine the payoffs and discount them
+    discounted_payoffs = exercise_values.apply(lambda path: np.exp(-r * path.first_valid_index() * dt) * path.dropna()[0] if path.first_valid_index() is not None else 0, axis=0)
+
+    # Average the discounted payoffs
+    option_price = discounted_payoffs.mean()
+
+    return option_price
+
+def plot_simulated_paths(simulated_paths, strike_price):
+    # Plot the simulated paths
+    plt.figure(figsize=(10, 6))
+    plt.plot(simulated_paths.iloc[:, :10])  # Plot first 10 paths
+    plt.axhline(y=strike_price, color='r', linestyle='--', label='Strike Price')
+    plt.legend()
+    plt.xlabel('Days')
+    plt.ylabel('Stock Price')
+    plt.title('Simulated Stock Price Paths with Strike Price')
+    plt.show()
+
 def brownian_motion_demo():
-    # Get user input for stock symbol
-    stock_symbol = st.text_input("Type the stock symbol for Brownian Motion simulation:", value='AAPL')
+    st.title('Brownian Motion & American Option Pricing')
 
-    # Check if the stock symbol is valid
-    if yf.Ticker(stock_symbol).info.get('symbol') != stock_symbol:
-        st.error(f"Error: {stock_symbol} is not a valid stock symbol.")
-        return  # Stop execution
-
-    # Select start and end date for historical data
-    start_date = st.date_input("Historical data start date", pd.to_datetime('2022-01-01'))
-    end_date = st.date_input("Historical data end date", pd.to_datetime('2023-01-01'))
-
-    # Get forecast days
-    forecast_days = st.slider('Forecast days for Brownian Motion:', min_value=10, max_value=250, value=100)
-
-    # Simulate Brownian Motion
-    simulated_prices = simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days)
-
-    # Plot the simulated prices
-    st.subheader('Simulated Stock Prices Using Brownian Motion')
-    simulated_prices.plot(figsize=(12,8))
-    st.pyplot(plt.gcf())
-
-    # European Option Pricing
-    st.subheader('European Option Pricing')
-    
-    # Input parameters for option pricing
-    option_type = st.selectbox("Option type:", options=['call', 'put'])
-    strike_price = st.number_input("Strike price:", value=simulated_prices.iloc[-1])
-    time_to_expiration = st.slider("Time to expiration (days):", min_value=1, max_value=365, value=30) / 365
+    stock_symbol = st.text_input("Stock Symbol:")
+    start_date = st.date_input("Start date for historical data:")
+    end_date = st.date_input("End date for historical data:")
+    forecast_days = st.number_input("Number of forecast days:", min_value=1, max_value=365, value=30)
+    strike_price = st.number_input("Strike price for the option:", value=100.0)
     risk_free_rate = st.number_input("Risk-free interest rate (annual, in %):", value=0.01) / 100
+    option_type = st.selectbox("Option Type:", options=['call', 'put'])
     volatility = st.number_input("Volatility (annual, in %):", value=simulated_prices.pct_change().std() * np.sqrt(252) * 100) / 100
     
     # Calculate option price
@@ -341,6 +350,21 @@ def brownian_motion_demo():
     
     # Display the option price
     st.write(f"The estimated price for the {option_type} option is: ${option_price:.2f}.")
+    
+    # Simulate Multiple Stock Price Paths
+    n_simulations = st.slider("Number of simulations for American option:", min_value=100, max_value=10000, value=1000)
+    simulated_paths = simulate_multiple_paths(stock_symbol, start_date, end_date, forecast_days, n_simulations)
+
+    # Plotting
+    st.subheader('Simulated Stock Price Paths')
+    plot_simulated_paths(simulated_paths, strike_price)
+    st.pyplot(plt)
+
+    # Calculate American option price
+    american_option_price_result = american_option_price(option_type, simulated_paths, strike_price, risk_free_rate, dt=1/252)
+
+    # Display the American option price
+    st.write(f"The estimated price for the American {option_type} option is: ${american_option_price_result:.2f}.")
 
 #########
 
