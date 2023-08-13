@@ -419,10 +419,10 @@ def brownian_motion_demo():
     st.write(f"The estimated price for the American {option_type} option is: ${american_option_price_result:.2f}.")
 
     # Additional part for European Option
-    st.subheader('American Option Pricing using Least Square Monte Carlo')
+    st.write('American Option Pricing using Least Square Monte Carlo')
     # european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, forecast_days)
     american_option_LSM(stock_symbol, start_date, end_date, strike_price, risk_free_rate, forecast_days, n_simulations, option_type=option_type)
-
+    st.write(f"The estimated price for the American {option_type} option using Least Square Monte Carlo method is: ${american_option_LSM:.2f}.")
 
 #########
 
