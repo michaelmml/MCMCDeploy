@@ -406,13 +406,20 @@ def display_word_cloud(headlines):
     st.pyplot(plt.gcf())
 
 def create_connection_graph(keywords, headlines):
+    # Preprocess keywords
+    keywords = [keyword.lower() for keyword in keywords]
     G = nx.Graph()
+
     for keyword in keywords:
         connections = []
         for headline in headlines:
+            # Lowercase and remove punctuation
+            headline = headline.lower().translate(str.maketrans('', '', string.punctuation))
             if keyword in headline:
                 connections.extend([word for word in headline.split() if word != keyword])
-        common_words = [word for word, count in Counter(connections).most_common(5)]
+        
+        # Consider all connections, not just the top 5
+        common_words = [word for word, count in Counter(connections).items()]
         G.add_node(keyword, color='blue')
         for word in common_words:
             G.add_edge(keyword, word, color='grey')
