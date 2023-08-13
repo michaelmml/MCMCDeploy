@@ -4,9 +4,8 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
-import scikit-learn as sklearn
 from scipy.stats import norm
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 
 ###############
 
@@ -302,7 +301,7 @@ def american_option_LSM(stock_symbol, start_date, end_date, strike_price, risk_f
         in_the_money = (paths[t] > K) if option_type == 'call' else (paths[t] < K)
         X = paths[t][in_the_money].reshape(-1, 1)
         y = payoffs[in_the_money] * discount_factor
-        model = LinearRegression().fit(X, y) # Fit continuation values
+        model = sklearn.linear_model.LinearRegression().fit(X, y) # Fit continuation values
         continuation_values = model.predict(X)
         immediate_payoffs = (paths[t] - K) if option_type == 'call' else (K - paths[t])
         exercise_now = immediate_payoffs[in_the_money] > continuation_values
