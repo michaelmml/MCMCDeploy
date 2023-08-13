@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
 from scipy.stats import norm
-from sklearn.linear_model import LinearRegression
+from scikit-learn.linear_model import LinearRegression
 
 ###############
 
