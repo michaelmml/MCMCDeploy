@@ -4,3 +4,8 @@ matplotlib
 pandas
 yfinance
 scikit-learn
+beautifulsoup4
+wordcloud
+networkx
+requests
+nltk
