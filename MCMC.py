@@ -276,7 +276,7 @@ def european_option_demo(stock_symbol, start_date, end_date, option_type, strike
     st.write(f"The estimated price for the European {option_type} option is: ${european_option_price_result:.2f}.")
 
 #########
-def american_option_LSM(stock_symbol, start_date, end_date, strike_price, risk_free_rate, M, N, option_type='call'):
+def american_option_LSM(stock_symbol, start_date, end_date, K, r, M, N, option_type='call'):
     S0 = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close'][-1]
     dt = M / 252  # Convert to years assuming 252 trading days per year
     sigma = calculate_volatility(stock_symbol, start_date, end_date)
