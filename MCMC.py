@@ -298,14 +298,15 @@ def american_option_LSM(stock_symbol, start_date, end_date, K, r, M, N, option_t
 
     # Backward induction
     for t in range(M-1, 0, -1):
-        in_the_money = (paths[t] > K) if option_type == 'call' else (paths[t] < K)
-        X = paths[t][in_the_money].reshape(-1, 1)
-        y = payoffs[in_the_money] * discount_factor
-        model = LinearRegression().fit(X, y) # Fit continuation values
-        continuation_values = model.predict(X)
-        immediate_payoffs = (paths[t] - K) if option_type == 'call' else (K - paths[t])
-        exercise_now = immediate_payoffs[in_the_money] > continuation_values
-        payoffs[in_the_money] = np.where(exercise_now, immediate_payoffs[in_the_money], payoffs[in_the_money] * discount_factor)
+        if np.any(in_the_money):
+            in_the_money = (paths[t] > K) if option_type == 'call' else (paths[t] < K)
+            X = paths[t][in_the_money].reshape(-1, 1)
+            y = payoffs[in_the_money] * discount_factor
+            model = LinearRegression().fit(X, y) # Fit continuation values
+            continuation_values = model.predict(X)
+            immediate_payoffs = (paths[t] - K) if option_type == 'call' else (K - paths[t])
+            exercise_now = immediate_payoffs[in_the_money] > continuation_values
+            payoffs[in_the_money] = np.where(exercise_now, immediate_payoffs[in_the_money], payoffs[in_the_money] * discount_factor)
 
     # Discounting to the present value
     option_price = np.exp(-r * dt) * np.mean(payoffs)
