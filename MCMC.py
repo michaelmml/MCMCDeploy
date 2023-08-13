@@ -4,6 +4,7 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
+import scikit-learn as sklearn
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
