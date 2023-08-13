@@ -4,3 +4,4 @@ matplotlib
 pandas
 yfinance
 sklearn
+sklearn.linear_model
