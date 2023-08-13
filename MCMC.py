@@ -7,6 +7,14 @@ import yfinance as yf
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 
+import requests
+from bs4 import BeautifulSoup
+import re
+from wordcloud import WordCloud
+import networkx as nx
+from collections import Counter
+
+
 ###############
 
 def stockplots():
@@ -192,54 +200,7 @@ def portfolio_simulator():
 
 #########
 
-# Function to generate sample data
-def generate_data(samples):
-    np.random.seed(0)
-    return np.random.normal(10, 2, samples)
-
-# Likelihood and transition model
-def likelihood(param, data):
-    mu, sigma = param
-    if sigma < 0:
-        return 0
-    else:
-        return np.prod(stats.norm(mu, sigma).pdf(data))
-
-def transition_model(param):
-    return [np.random.normal(param[0], 0.5), abs(np.random.normal(param[1], 0.5))]
-
-# Metropolis-Hastings algorithm
-def metropolis_hastings(likelihood_func, transition_model, param_init, iterations, data):
-    param_current = param_init
-    param_posterior = []
-    for i in range(iterations):
-        param_new = transition_model(param_current)
-        ratio = likelihood_func(param_new, data) / likelihood_func(param_current, data)
-        acceptance = min(1, ratio)
-        if np.random.uniform(0,1) < acceptance:
-            param_current = param_new
-        param_posterior.append(param_current)
-    return param_posterior
-
-# Main Metropolis-Hastings demonstration function
-def run_metropolis_hastings_demo(samples, iterations, burn_in):
-    data = generate_data(samples)
-    output = metropolis_hastings(likelihood, transition_model, [0,1], iterations, data)
-    estimated_mean = np.mean([param[0] for param in output[burn_in:]])
-    estimated_std_dev = np.mean([param[1] for param in output[burn_in:]])
-
-    # Output to Streamlit
-    st.title('Metropolis-Hastings Algorithm')
-    st.write(f"Estimated Mean: {estimated_mean}")
-    st.write(f"Estimated Standard Deviation: {estimated_std_dev}")
-
-    # Plotting
-    plt.figure(figsize=(10, 6))
-    plt.plot([param[0] for param in output], label='Mean')
-    plt.plot([param[1] for param in output], label='Standard Deviation')
-    plt.axvline(x=burn_in, linestyle='--', color='red', label='Burn-in period')
-    plt.legend()
-    st.pyplot(plt)
+# Metropolis Hastings - refer to Gist
 
 #########
 # Black Scholes for European
@@ -426,6 +387,60 @@ def brownian_motion_demo():
 
 #########
 
+def fetch_headlines(keywords):
+    url = f"https://www.google.com/search?q=site:news.google.com+{'+'.join(keywords)}"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    headlines = [re.sub('<.*?>', '', str(h3)) for h3 in soup.find_all('h3')]
+
+    return headlines
+
+def display_word_cloud(headlines):
+    text = ' '.join(headlines)
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+
+    plt.figure(figsize=(10,5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    st.pyplot(plt.gcf())
+
+def create_connection_graph(keywords, headlines):
+    G = nx.Graph()
+    for keyword in keywords:
+        connections = []
+        for headline in headlines:
+            if keyword in headline:
+                connections.extend([word for word in headline.split() if word != keyword])
+        common_words = [word for word, count in Counter(connections).most_common(5)]
+        G.add_node(keyword, color='blue')
+        for word in common_words:
+            G.add_edge(keyword, word, color='grey')
+
+    pos = nx.spring_layout(G)
+    colors = [G.nodes[node].get('color', 'red') for node in G.nodes]
+    nx.draw(G, pos, with_labels=True, node_color=colors, font_weight='bold', node_size=700)
+    plt.show()
+
+def financialheadlines():
+    st.title('Google News Headline Search')
+    keywords_input = st.text_input('Enter keywords to search for (e.g., company name, topics), separated by commas:')
+
+    if st.button('Search'):
+        keywords = [keyword.strip() for keyword in keywords_input.split(',')]
+        headlines = fetch_headlines(keywords)
+        st.subheader('Search Results')
+        
+        st.write("Headlines:")
+        for headline in headlines[:5]:
+            st.write(headline)
+        
+        st.write("Word Cloud:")
+        display_word_cloud(headlines)
+
+        st.write("Word Connections:")
+        create_connection_graph(keywords, headlines)
+
 ######################### Navigation
 st.sidebar.title('NATLANTICS')
 page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Brownian Motion', 'Metropolis-Hastings Demo'])
@@ -436,11 +451,5 @@ elif page == 'Portfolio Simulator':
     portfolio_simulator()
 elif page == 'Brownian Motion':
     brownian_motion_demo()
-elif page == 'Metropolis-Hastings Demo':
-    st.sidebar.title('Metropolis-Hastings Demo')
-    samples = st.sidebar.slider('Number of data samples', 100, 1000, 1000)
-    iterations = st.sidebar.slider('Number of iterations', 1000, 10000, 5000)
-    burn_in = st.sidebar.slider('Burn-in period', 0, iterations//2, 1000)
-
-    # Call the main function
-    run_metropolis_hastings_demo(samples, iterations, burn_in)
+elif page == 'Financial News Summary':
+    financialheadlines()
