@@ -443,7 +443,7 @@ def financialheadlines():
 
 ######################### Navigation
 st.sidebar.title('NATLANTICS')
-page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Brownian Motion', 'Metropolis-Hastings Demo'])
+page = st.sidebar.radio("Go to", ['Stock Price Plot', 'Portfolio Simulator', 'Brownian Motion', 'Financial News Summary'])
 
 if page == 'Stock Price Plot':
     stockplots()
