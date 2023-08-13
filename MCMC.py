@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
 from scipy.stats import norm
+from sklearn.linear_model import LinearRegression
 
 ###############
 
@@ -259,13 +260,10 @@ def black_scholes(option_type, S, K, r, T, sigma):
 def calculate_volatility(stock_symbol, start_date, end_date):
     # Get stock historical data
     stock_data = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close']
-    
     # Calculate daily returns
     daily_returns = stock_data.pct_change().dropna()
-
     # Calculate volatility as the standard deviation of daily returns
     volatility = daily_returns.std()
-
     return volatility
 
 def european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, expiry_days):
@@ -277,6 +275,44 @@ def european_option_demo(stock_symbol, start_date, end_date, option_type, strike
     
     st.write(f"The estimated price for the European {option_type} option is: ${european_option_price_result:.2f}.")
 
+#########
+def american_option_LSM(stock_symbol, start_date, end_date, strike_price, risk_free_rate, M, N, option_type='call'):
+    S0 = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close'][-1]
+    dt = M / 252  # Convert to years assuming 252 trading days per year
+    sigma = calculate_volatility(stock_symbol, start_date, end_date)
+
+    discount_factor = np.exp(-r * dt)
+    
+    # Simulate asset price paths using Geometric Brownian Motion
+    paths = np.zeros((M+1, N))
+    paths[0] = S0
+    for t in range(1, M+1):
+        z = np.random.standard_normal(N)
+        paths[t] = paths[t-1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * z)
+
+    # Initialize payoffs at final time step
+    if option_type == 'call':
+        payoffs = np.maximum(paths[-1] - K, 0)
+    else:
+        payoffs = np.maximum(K - paths[-1], 0)
+
+    # Backward induction
+    for t in range(M-1, 0, -1):
+        in_the_money = (paths[t] > K) if option_type == 'call' else (paths[t] < K)
+        X = paths[t][in_the_money].reshape(-1, 1)
+        y = payoffs[in_the_money] * discount_factor
+        model = LinearRegression().fit(X, y) # Fit continuation values
+        continuation_values = model.predict(X)
+        immediate_payoffs = (paths[t] - K) if option_type == 'call' else (K - paths[t])
+        exercise_now = immediate_payoffs[in_the_money] > continuation_values
+        payoffs[in_the_money] = np.where(exercise_now, immediate_payoffs[in_the_money], payoffs[in_the_money] * discount_factor)
+
+    # Discounting to the present value
+    option_price = np.exp(-r * dt) * np.mean(payoffs)
+
+    return option_price
+
+#########
 # Simulations for American
 def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
     # Get stock historical data
@@ -303,7 +339,6 @@ def simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days):
     return stock_prices
 
 def simulate_multiple_paths(stock_symbol, start_date, end_date, forecast_days, n_simulations):
-    # Simulate n_simulations paths of stock prices
     paths = [simulate_brownian_motion(stock_symbol, start_date, end_date, forecast_days) for _ in range(n_simulations)]
     return pd.DataFrame(paths).transpose()
 
@@ -368,7 +403,7 @@ def brownian_motion_demo():
     option_type = st.selectbox("Option Type:", options=['call', 'put'])
 
     # Simulate Multiple Stock Price Paths
-    n_simulations = st.slider("Number of simulations for American option:", min_value=100, max_value=10000, value=1000)
+    n_simulations = st.slider("Number of simulations for American option:", min_value=100, max_value=1000, value=100)
     simulated_paths = simulate_multiple_paths(stock_symbol, start_date, end_date, forecast_days, n_simulations)
 
     # Plotting
@@ -383,9 +418,9 @@ def brownian_motion_demo():
     st.write(f"The estimated price for the American {option_type} option is: ${american_option_price_result:.2f}.")
 
     # Additional part for European Option
-    st.subheader('European Option Pricing using Black-Scholes')
-    expiry_days = st.number_input("Number of expiry days for European option:", min_value=1, max_value=365, value=30)
-    european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, expiry_days)
+    st.subheader('American Option Pricing using Least Square Monte Carlo')
+    # european_option_demo(stock_symbol, start_date, end_date, option_type, strike_price, risk_free_rate, forecast_days)
+    american_option_LSM(stock_symbol, start_date, end_date, strike_price, risk_free_rate, forecast_days, n_simulations, option_type=option_type)
 
 
 #########
