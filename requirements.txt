@@ -3,4 +3,4 @@ scipy
 matplotlib
 pandas
 yfinance
-scikit_learn
+scikit-learn
