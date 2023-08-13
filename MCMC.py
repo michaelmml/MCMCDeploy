@@ -330,15 +330,32 @@ def american_option_price(option_type, simulated_paths, K, r, dt):
 
     return option_price
 
-def plot_simulated_paths(simulated_paths, strike_price):
-    # Plot the simulated paths
+def plot_simulated_paths(stock_symbol, start_date, end_date, simulated_paths, strike_price):
+    # Get stock historical data
+    historical_data = yf.Ticker(stock_symbol).history(period='1d', start=start_date, end=end_date)['Close']
+
+    # Plot historical price
     plt.figure(figsize=(10, 6))
-    plt.plot(simulated_paths.iloc[:, :10])  # Plot first 10 paths
+    plt.plot(historical_data, label='Historical Price')
+
+    # Calculate quantiles for simulated paths
+    median_path = simulated_paths.quantile(0.5, axis=1)
+    lower_bound = simulated_paths.quantile(0.25, axis=1)
+    upper_bound = simulated_paths.quantile(0.75, axis=1)
+
+    # Combine historical data with the forecasted median
+    x = np.arange(len(historical_data), len(historical_data) + len(median_path))
+    plt.plot(x, median_path, label='Median Simulated Price')
+    plt.fill_between(x, lower_bound, upper_bound, color='skyblue', alpha=0.4, label='Interquartile Range (25th-75th percentile)')
+
+    # Plot the strike price
     plt.axhline(y=strike_price, color='r', linestyle='--', label='Strike Price')
+
+    # Labeling
     plt.legend()
     plt.xlabel('Days')
     plt.ylabel('Stock Price')
-    plt.title('Simulated Stock Price Paths with Strike Price')
+    plt.title('Historical and Simulated Stock Price with Strike Price')
     plt.show()
 
 def brownian_motion_demo():
@@ -358,7 +375,7 @@ def brownian_motion_demo():
 
     # Plotting
     st.subheader('Simulated Stock Price Paths')
-    plot_simulated_paths(simulated_paths, strike_price)
+    plot_simulated_paths(stock_symbol, start_date, end_date, simulated_paths, strike_price)
     st.pyplot(plt)
 
     # Calculate American option price
