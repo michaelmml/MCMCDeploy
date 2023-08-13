@@ -96,7 +96,7 @@ def stockplots():
 def portfolio_simulator():
 
     # Allow users to manually input stock symbols as a comma-separated string
-    stock_input = st.text_input("Type up to 10 stock symbols for your portfolio (separated by commas):", value='AAPL, MSFT')
+    stock_input = st.text_input("Type up to 10 stock symbols for your portfolio (separated by commas):", value='AAPL, BP, WMT, BA, PFE')
     selected_stocks = [stock.strip() for stock in stock_input.split(',')]
 
     # Check if there are more than 10 stocks
@@ -110,16 +110,10 @@ def portfolio_simulator():
             st.error(f"Error: {stock} is not a valid stock symbol.")
             return  # Stop execution
     
-    # Check if the stock symbols are valid by trying to download the data
-    for stock in selected_stocks:
-        if yf.Ticker(stock).info.get('symbol') != stock:
-            st.error(f"Error: {stock} is not a valid stock symbol.")
-            return  # Stop execution
-    
     # Get the percentage allocation for each selected stock
     allocations = {}
     for stock in selected_stocks:
-        allocations[stock] = st.number_input(f"Allocation for {stock} (in %):", min_value=1, max_value=100, value=10)
+        allocations[stock] = st.number_input(f"Allocation for {stock} (in %):", min_value=1, max_value=100, value=20)
 
     # Check if the sum of the allocations is equal to 100
     if sum(allocations.values()) != 100:
@@ -323,8 +317,10 @@ def american_option_price(option_type, simulated_paths, K, r, dt):
         raise ValueError("Invalid option type. Use 'call' or 'put'.")
 
     # Determine the payoffs and discount them
-    discounted_payoffs = exercise_values.apply(lambda path: np.exp(-r * path.first_valid_index() * dt) * path.dropna()[0] if path.first_valid_index() is not None else 0, axis=0)
-
+    discounted_payoffs = exercise_values.apply(
+    lambda path: np.exp(-r * path.first_valid_index() * dt) * path.dropna().iloc[0] if path.first_valid_index() is not None and not path.dropna().empty else 0, 
+    axis=0)
+    
     # Average the discounted payoffs
     option_price = discounted_payoffs.mean()
 
