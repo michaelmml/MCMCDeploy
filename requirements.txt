@@ -3,5 +3,4 @@ scipy
 matplotlib
 pandas
 yfinance
-sklearn
-sklearn.linear_model
+scikit-learn
