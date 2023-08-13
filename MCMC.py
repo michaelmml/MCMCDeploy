@@ -4,8 +4,9 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import pandas as pd
 import yfinance as yf
+import sklearn
 from scipy.stats import norm
-# from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression
 
 ###############
 
