@@ -336,24 +336,26 @@ def plot_simulated_paths(stock_symbol, start_date, end_date, simulated_paths, st
 
     # Plot historical price
     plt.figure(figsize=(10, 6))
-    plt.plot(historical_data, label='Historical Price')
+    plt.plot(historical_data.index, historical_data.values, label='Historical Price')
 
     # Calculate quantiles for simulated paths
-    median_path = simulated_paths.quantile(0.5, axis=1)
-    lower_bound = simulated_paths.quantile(0.25, axis=1)
-    upper_bound = simulated_paths.quantile(0.75, axis=1)
+    median_path = np.percentile(simulated_paths, 50, axis=1)
+    lower_bound = np.percentile(simulated_paths, 25, axis=1)
+    upper_bound = np.percentile(simulated_paths, 75, axis=1)
 
-    # Combine historical data with the forecasted median
-    x = np.arange(len(historical_data), len(historical_data) + len(median_path))
-    plt.plot(x, median_path, label='Median Simulated Price')
-    plt.fill_between(x, lower_bound, upper_bound, color='skyblue', alpha=0.4, label='Interquartile Range (25th-75th percentile)')
+    # Define x values for simulated paths
+    forecasted_dates = pd.date_range(start=historical_data.index[-1] + pd.Timedelta(days=1), periods=len(median_path), freq='B')
+    
+    # Plot the median and interquartile range of simulated paths
+    plt.plot(forecasted_dates, median_path, label='Median Simulated Price')
+    plt.fill_between(forecasted_dates, lower_bound, upper_bound, color='skyblue', alpha=0.4, label='Interquartile Range (25th-75th percentile)')
 
     # Plot the strike price
     plt.axhline(y=strike_price, color='r', linestyle='--', label='Strike Price')
 
     # Labeling
     plt.legend()
-    plt.xlabel('Days')
+    plt.xlabel('Date')
     plt.ylabel('Stock Price')
     plt.title('Historical and Simulated Stock Price with Strike Price')
     plt.show()
