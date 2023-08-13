@@ -430,10 +430,10 @@ def financialheadlines():
         keywords = [keyword.strip() for keyword in keywords_input.split(',')]
         headlines = fetch_headlines(keywords)
         st.subheader('Search Results')
-        
+
+       # Display the list of headlines as a table
         st.write("Headlines:")
-        for headline in headlines[:5]:
-            st.write(headline)
+        st.table(pd.DataFrame(headlines, columns=["Headlines"]))  # Using pandas DataFrame to create a table
         
         st.write("Word Cloud:")
         display_word_cloud(headlines)
