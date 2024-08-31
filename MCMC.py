@@ -15,7 +15,7 @@ import networkx as nx
 from collections import Counter
 import string
 
-###############
+##############
 
 def stockplots():
     # Define the set of stocks
